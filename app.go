@@ -21,7 +21,7 @@ type data struct {
 }
 
 func readClientId() string {
-	dat, err := ioutil.ReadFile("./client-id")
+	dat, err := ioutil.ReadFile("/Users/luna/.config/twitch-alert/client-id")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -41,10 +41,27 @@ func getRequestStream(userId string, clientId string) *http.Request {
 	req.Header.Set("Client-ID", clientId)
 	return req
 }
-
 func main() {
+	// ticker := time.NewTicker(5 * time.Second)
+	// quit := make(chan struct{})
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case <-ticker.C:
+	// 			// do stuff
+	// 			notify()
+	// 		case <-quit:
+	// 			ticker.Stop()
+	// 			return
+	// 		}
+	// 	}
+	// }()
+	notify()
+}
+func notify() {
 	// read id from file to get clientId
 	clientId := readClientId()
+
 	note := gosxnotifier.NewNotification("twitch noticator")
 	note.Group = "com.github.felipeluna.twitch-notify"
 	note.AppIcon = "~/.config/twich-alert/resources/twitch-logo.png"
