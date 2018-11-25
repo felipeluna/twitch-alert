@@ -94,24 +94,19 @@ func notify() bool {
 	}
 	err = json.Unmarshal(contents, &d)
 
-	var result bool
-	if len(d.Items) == 0 {
-		result = false
-		note.Title = streamer + " is Offline"
-		note.ContentImage = "./resources/BibleThump.png"
-	} else {
+	var result bool = false
+	if len(d.Items) > 0 {
 		result = true
 		note.Title = streamer + " is Online"
 		note.ContentImage = "./resources/PogChamp.png"
 		note.Link = "http://www.twitch.com/" + streamer //or BundleID like: com.apple.Terminal
-	}
+		//Then, push the notification
+		err = note.Push()
 
-	//Then, push the notification
-	err = note.Push()
-
-	//If necessary, check error
-	if err != nil {
-		log.Println("Uh oh!")
+		//If necessary, check error
+		if err != nil {
+			log.Println("Uh oh!")
+		}
 	}
 	return result
 
