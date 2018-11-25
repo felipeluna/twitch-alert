@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	gosxnotifier "github.com/deckarep/gosx-notifier"
 )
@@ -20,6 +21,7 @@ type data struct {
 	} `json:"pagination"`
 }
 
+// read the file that contains the credentials for talking with twitch.tv api
 func readClientId() string {
 	dat, err := ioutil.ReadFile("/Users/luna/.config/twitch-alert/client-id")
 	if err != nil {
@@ -28,6 +30,8 @@ func readClientId() string {
 	return string(dat)
 
 }
+
+// make a get request to api.twitch.tv with the
 func getRequestUser(user string, clientId string) *http.Request {
 	req, _ := http.NewRequest("GET", "https://api.twitch.tv/helix/users?login="+user, nil)
 
@@ -42,23 +46,21 @@ func getRequestStream(userId string, clientId string) *http.Request {
 	return req
 }
 func main() {
-	// ticker := time.NewTicker(5 * time.Second)
-	// quit := make(chan struct{})
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case <-ticker.C:
-	// 			// do stuff
-	// 			notify()
-	// 		case <-quit:
-	// 			ticker.Stop()
-	// 			return
-	// 		}
-	// 	}
-	// }()
-	notify()
+	done := make(chan bool)
+	go func() {
+		for {
+			result := notify()
+			t := time.Now()
+			fmt.Printf("%s - %t\n", t.String(), result)
+			if result {
+				done <- true
+			}
+			time.Sleep(1 * time.Minute)
+		}
+	}()
+	<-done
 }
-func notify() {
+func notify() bool {
 	// read id from file to get clientId
 	clientId := readClientId()
 
@@ -92,10 +94,13 @@ func notify() {
 	}
 	err = json.Unmarshal(contents, &d)
 
+	var result bool
 	if len(d.Items) == 0 {
+		result = false
 		note.Title = streamer + " is Offline"
 		note.ContentImage = "./resources/BibleThump.png"
 	} else {
+		result = true
 		note.Title = streamer + " is Online"
 		note.ContentImage = "./resources/PogChamp.png"
 		note.Link = "http://www.twitch.com/" + streamer //or BundleID like: com.apple.Terminal
@@ -108,5 +113,6 @@ func notify() {
 	if err != nil {
 		log.Println("Uh oh!")
 	}
+	return result
 
 }
